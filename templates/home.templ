@@ -1,0 +1,22 @@
+package templates
+
+import "github.com/TuanLe53/Roadmap-Broadcast-Server/templates/layout"
+
+templ Home() {
+    @layout.Layout(){
+    <div>
+        <div hx-ext="ws" ws-connect="/ws">
+            <div id="messages" hx-swap="beforeend" hx-swap-oob="beforeend">
+                <!-- Messages will be appended here -->
+            </div>
+            <form id="form" ws-send>
+                <div>
+                    <input type="text" name="text" min="1" id="messageInput" placeholder="Type a message...">
+                    <button type="submit">Send</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+    }
+}
