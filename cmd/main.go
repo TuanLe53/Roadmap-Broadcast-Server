@@ -13,6 +13,7 @@ func serverWS(pool *websocket.Pool, c echo.Context) error {
 	conn, err := websocket.Upgrade(c)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	client := &websocket.Client{
