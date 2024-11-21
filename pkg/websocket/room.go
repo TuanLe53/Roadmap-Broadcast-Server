@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Pool struct {
+type Room struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Clients    map[*Client]bool
@@ -15,8 +15,8 @@ type Pool struct {
 	mu         sync.Mutex
 }
 
-func NewPool() *Pool {
-	return &Pool{
+func NewRoom() *Room {
+	return &Room{
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
@@ -24,17 +24,17 @@ func NewPool() *Pool {
 	}
 }
 
-func (pool *Pool) Start() {
+func (room *Room) Start() {
 	for {
 		select {
-		case client := <-pool.Register:
-			pool.mu.Lock()
-			pool.Clients[client] = true
-			pool.mu.Unlock()
+		case client := <-room.Register:
+			room.mu.Lock()
+			room.Clients[client] = true
+			room.mu.Unlock()
 
-			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
+			fmt.Println("Size of Connection Pool: ", len(room.Clients))
 
-			for client := range pool.Clients {
+			for client := range room.Clients {
 				fmt.Println(client)
 				notify := &Message{ClientName: client.ID, Text: "New User Joined..."}
 				err := client.Conn.WriteMessage(websocket.TextMessage, getTemplate("templates/notify.html", notify))
@@ -44,15 +44,15 @@ func (pool *Pool) Start() {
 				}
 			}
 
-		case client := <-pool.Unregister:
-			pool.mu.Lock()
-			delete(pool.Clients, client)
-			pool.mu.Unlock()
+		case client := <-room.Unregister:
+			room.mu.Lock()
+			delete(room.Clients, client)
+			room.mu.Unlock()
 			client.Conn.Close()
 
-			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
+			fmt.Println("Size of Connection Pool: ", len(room.Clients))
 
-			for client := range pool.Clients {
+			for client := range room.Clients {
 				notify := &Message{ClientName: client.ID, Text: "User Disconnected..."}
 				err := client.Conn.WriteMessage(websocket.TextMessage, getTemplate("templates/notify.html", notify))
 				if err != nil {
@@ -61,16 +61,16 @@ func (pool *Pool) Start() {
 				}
 			}
 
-		case message := <-pool.Broadcast:
-			pool.mu.Lock()
-			for client := range pool.Clients {
+		case message := <-room.Broadcast:
+			room.mu.Lock()
+			for client := range room.Clients {
 				err := client.Conn.WriteMessage(websocket.TextMessage, getTemplate("templates/message.html", message))
 				if err != nil {
 					fmt.Println("Error writing message", err)
 					continue
 				}
 			}
-			pool.mu.Unlock()
+			room.mu.Unlock()
 		}
 	}
 }
