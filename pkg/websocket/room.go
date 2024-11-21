@@ -8,6 +8,7 @@ import (
 )
 
 type Room struct {
+	name       string
 	Register   chan *Client
 	Unregister chan *Client
 	Clients    map[*Client]bool
@@ -15,8 +16,9 @@ type Room struct {
 	mu         sync.Mutex
 }
 
-func NewRoom() *Room {
+func NewRoom(name string) *Room {
 	return &Room{
+		name:       name,
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
